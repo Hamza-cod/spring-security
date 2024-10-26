@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: authentication
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth
+    driver-class-name: org.postgresql.Driver
+    username: hamza
+    password: hamza911code
+  jpa:
+    hibernate:
+      ddl-auto: 'update'
+    show-sql: true
+    properties:
+      format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+        add-mappings: false
+
