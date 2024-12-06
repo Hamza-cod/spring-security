@@ -4,10 +4,13 @@ import com.auth.authentication.dto.request.LoginRequest;
 import com.auth.authentication.dto.request.RegisterRequest;
 import com.auth.authentication.dto.response.AuthResponse;
 import com.auth.authentication.entity.Role;
+import com.auth.authentication.entity.Token;
 import com.auth.authentication.entity.User;
 import com.auth.authentication.exception.EmailAlreadyExistsException;
+import com.auth.authentication.repository.TokenRepository;
 import com.auth.authentication.repository.UserRepository;
 import com.auth.authentication.service.security.JwtService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,11 +21,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
+@Transactional
 public class AuthServiceImpl implements AuthService{
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TokenRepository tokenRepository;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -57,6 +62,17 @@ public class AuthServiceImpl implements AuthService{
         }
         var user = repository.findByEmail(request.getEmail()).orElseThrow(() -> new BadCredentialsException("User not found"));
         var jwtToken = jwtService.generateToken(user);
+        var optionalToken = tokenRepository.findByUserId(user.getId());
+        if(optionalToken.isPresent()){
+            tokenRepository.deleteOneById(optionalToken.get());
+        }
+        var token = Token.builder()
+                .token(jwtToken)
+                .user(user)
+                .build();
+        tokenRepository.save(
+                token
+        );
         return new AuthResponse(jwtToken);
     }
 }

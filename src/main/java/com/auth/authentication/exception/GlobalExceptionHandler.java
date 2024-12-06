@@ -2,6 +2,7 @@ package com.auth.authentication.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -43,4 +45,20 @@ public class GlobalExceptionHandler {
         public ErrorResponce handleNoHandlerFoundException(HttpRequestMethodNotSupportedException e) {
                 return  new ErrorResponce(Status.BAD_REQUEST,"Unsupported Method : " + e.getMethod());
         }
+        @ExceptionHandler(HttpMessageNotReadableException.class)
+        @ResponseStatus(HttpStatus.BAD_REQUEST)
+        public ErrorResponce handleNoHandlerFoundException(HttpMessageNotReadableException e) {
+                return  new ErrorResponce(Status.BAD_REQUEST,"Request body is required" );
+        }
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+                Map<String, Object> responseBody = new HashMap<>();
+                responseBody.put("error", "Unexpected Error");
+                responseBody.put("message", ex.getMessage());
+
+                return ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(responseBody);
+        }
+
 }

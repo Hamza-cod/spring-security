@@ -1,5 +1,6 @@
 package com.auth.authentication.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,6 +28,9 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
     private String password;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private Token token;
     @Enumerated(EnumType.STRING)
     private Role role;
     @Override
