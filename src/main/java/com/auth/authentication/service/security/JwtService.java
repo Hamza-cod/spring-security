@@ -1,10 +1,14 @@
 package com.auth.authentication.service.security;
 
+import com.auth.authentication.repository.TokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +20,16 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-    private static final String SECRET_KEY = "d41d5747c85936ec34ceb5617fa68828e089dcb79e784d62a0851cc5a34f159bde0ec3ddcab3e5b4dd544aa7d583fa3998102168ae542055360c238db3988efedefeb2907b140f1308a5d5c6076c2ea5f0cb6210a24634645ab7b397f2921b0b429010b91d6ab864a4e7f93379d52e9e4bba8fd1076385492c60808370e179814b85bff455cc9b5dfb62e1a706d675048c24aefa54a06f61d1e63a87e7f298bad98b3dded04d94c65bb0c6c8228757061824ccf440b5ebaa6bfbb1d27d2e1982f3dc07549654973c9bf95bc7eebbf3237b5f924e4b1f3f79";
+    @Autowired
+    private  TokenRepository tokenRepository;
+    @Value("${application.security.jwt.secret-key}")
+    private  String secretKey;
+
+    @Value("${application.security.jwt.expiration}")
+    private long jwtExpirationMilliSec;
+    @Value("${application.security.jwt.refresh-expiration}")
+    private long refreshExpirationMilliSec;
+
 
     public String extractUsername(String token){
         return extractClaim(token , Claims::getSubject);
@@ -26,15 +39,25 @@ public class JwtService {
     }
     public String generateToken(Map<String,Object> extraClaims,
                                 UserDetails userDetails){
+        return buildToken(extraClaims,userDetails,jwtExpirationMilliSec);
+    }
+    public String generateRefreshToken(UserDetails userDetails){
+        return buildToken(new HashMap<>(), userDetails,refreshExpirationMilliSec);
+    }
+
+    private String buildToken(Map<String,Object> extraClaims,
+                              UserDetails userDetails,long expiration){
         return Jwts.builder().claims(extraClaims).
                 subject(userDetails.getUsername()).issuedAt(new Date(System.currentTimeMillis())).
-        expiration(new Date(System.currentTimeMillis() + 86400000))
+                expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256).compact();
+
     }
 
     public boolean isTokenValid(String token , UserDetails  userDetails){
+        var optionalToken = this.tokenRepository.findByToken(token);
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokeExpaired(token);
+        return (username.equals(userDetails.getUsername())) && !isTokeExpaired(token) && optionalToken.isPresent();
     }
 
     private boolean isTokeExpaired(String token) {
@@ -56,7 +79,7 @@ public class JwtService {
                 .build().parseClaimsJws(token).getBody();
     }
     private Key getSignInKey(){
-        byte[]  keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[]  keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

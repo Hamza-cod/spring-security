@@ -1,6 +1,6 @@
 package com.auth.authentication.config;
 
-import com.auth.authentication.repository.TokenRepository;
+
 import com.auth.authentication.service.security.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,7 +22,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userService;
-    private final TokenRepository tokenRepository;
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -40,8 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         userEmail = jwtService.extractUsername(jwt);
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null){
             UserDetails userDetails = this.userService.loadUserByUsername(userEmail);
-            var optionalToken = this.tokenRepository.findByToken(jwt);
-            if(jwtService.isTokenValid(jwt,userDetails) && optionalToken.isPresent()){
+
+            if(jwtService.isTokenValid(jwt,userDetails) ){
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,

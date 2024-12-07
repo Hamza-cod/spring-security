@@ -30,11 +30,14 @@ public class LogoutService implements LogoutHandler {
            throw  new AccessDeniedException("not authenticated");
         }
         jwt = authHeader.substring(7);
-        var storedTokenId = tokenRepository.findByToken(jwt)
+        var storedToken = tokenRepository.findOneByToken(jwt)
                 .orElseThrow(()->new AccessDeniedException("not authenticated"));
-        if (storedTokenId != null) {
-            tokenRepository.deleteOneById(storedTokenId);
+        var storedRefreshToken = tokenRepository.findRefreshTokenByUserId(storedToken.getUser().getId())
+                .orElseThrow(()->new AccessDeniedException("not authenticated"));
+
+            tokenRepository.deleteOneById(storedToken.getId());
+            tokenRepository.deleteOneById(storedRefreshToken);
             SecurityContextHolder.clearContext();
-        }
+
     }
 }

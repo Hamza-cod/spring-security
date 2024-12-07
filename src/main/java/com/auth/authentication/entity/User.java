@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -28,9 +29,9 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
     private String password;
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private Token token;
+    private Set<Token> token;
     @Enumerated(EnumType.STRING)
     private Role role;
     @Override

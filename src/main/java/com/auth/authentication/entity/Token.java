@@ -12,15 +12,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tokens")
+@Table(name = "tokens", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "type"})
+})
 public class Token {
     @Id
     @GeneratedValue
     private long id;
     @Column(unique = true)
     private String token;
-    @OneToOne
-    @JoinColumn(name = "user_id",unique = true)
+    @Enumerated(EnumType.STRING)
+    private TokenType type;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
     @JsonBackReference
     private User user;
 }
