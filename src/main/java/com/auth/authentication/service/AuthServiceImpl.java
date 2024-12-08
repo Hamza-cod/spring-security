@@ -39,7 +39,7 @@ public class AuthServiceImpl implements AuthService{
     private final TokenRepository tokenRepository;
 
     @Override
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request,Role role) {
         if(repository.findByEmail(request.getEmail()).isPresent()){
             throw new EmailAlreadyExistsException("Email already exists try to login");
         }
@@ -48,7 +48,7 @@ public class AuthServiceImpl implements AuthService{
                 .lastName(request.getFirstname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(role)
                 .build();
         repository.save(user);
         var jwtToken = jwtService.generateToken(user);
